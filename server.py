@@ -33,61 +33,69 @@ def upload_frame():
 @app.route("/viewer", methods=["GET"])
 def viewer():
     return """
-    <!doctype html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Frame Counter</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <style>
-        body {
-          font-family: sans-serif;
-          text-align: center;
-          margin: 40px;
-        }
-        #count {
-          font-size: 56px;
-          font-weight: bold;
-          margin-top: 20px;
-        }
-        #status {
-          margin-top: 16px;
-          color: #555;
-        }
-      </style>
-    </head>
-    <body>
-      <h2>Latest Received Frame</h2>
-      <div id="count">--</div>
-      <div id="status">Waiting...</div>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 40px;
+    }
+    #count {
+      font-size: 56px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+    #status {
+      margin-top: 16px;
+      color: #555;
+    }
+    img {
+      margin-top: 20px;
+      max-width: 100%;
+      background: black;
+    }
+  </style>
+</head>
+<body>
+  <h2>Latest Received Frame</h2>
+  <div id="count">--</div>
+  <div id="status">Waiting...</div>
+  <img id="img" src="" alt="latest frame">
 
-      <script>
-        const count = document.getElementById("count");
-        const status = document.getElementById("status");
+  <script>
+    const count = document.getElementById("count");
+    const status = document.getElementById("status");
+    const img = document.getElementById("img");
 
-        async function refresh() {
-          try {
-            const res = await fetch("/frame-count?t=" + Date.now(), {
-              cache: "no-store"
-            });
-            const data = await res.json();
+    async function refresh() {
+      try {
+        const res = await fetch("/frame-count?t=" + Date.now(), {
+          cache: "no-store"
+        });
+        const data = await res.json();
 
-            if (data.ok) {
-              count.textContent = data.frame_id;
-              status.textContent = "Updated: " + new Date().toLocaleTimeString();
-            } else {
-              status.textContent = "No frame yet";
-            }
-          } catch (err) {
-            status.textContent = "Error: " + err.message;
-          }
+        if (data.ok) {
+          count.textContent = data.frame_id;
+          status.textContent = "Updated: " + new Date().toLocaleTimeString();
+          img.src = "/latest?t=" + Date.now();
+        } else {
+          status.textContent = "No frame yet";
         }
+      } catch (err) {
+        status.textContent = "Error: " + err.message;
+      }
+    }
 
-        refresh();
-        setInterval(refresh, 100);
-      </script>
-    </body>
-    </html>
+    refresh();
+    setInterval(refresh, 300);
+  </script>
+</body>
+</html>
     """
 
 @app.route("/frame-count", methods=["GET"])
