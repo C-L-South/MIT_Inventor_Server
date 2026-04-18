@@ -84,7 +84,7 @@ def viewer():
         }
 
         refresh();
-        setInterval(refresh, 10);
+        setInterval(refresh, 100);
       </script>
     </body>
     </html>
