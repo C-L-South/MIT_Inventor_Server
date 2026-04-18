@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import os
 
@@ -8,7 +8,7 @@ os.makedirs("frames", exist_ok=True)
 
 @app.route("/", methods=["GET"])
 def home():
-    return "server is running"
+    return "server is reachable"
 
 @app.route("/", methods=["POST"])
 def upload_frame():
@@ -20,5 +20,12 @@ def upload_frame():
     file.save("frames/latest.jpg")
     return jsonify({"ok": True})
 
+@app.route("/latest", methods=["GET"])
+def latest():
+    path = "frames/latest.jpg"
+    if not os.path.exists(path):
+        return jsonify({"ok": False, "error": "no frame yet"}), 404
+    return send_file(path, mimetype="image/jpeg")
+
 if __name__ == "__main__":
-    app.run()
+    app.run(host="0.0.0.0", port=8080)
