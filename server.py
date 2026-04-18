@@ -26,6 +26,34 @@ def latest():
     if not os.path.exists(path):
         return jsonify({"ok": False, "error": "no frame yet"}), 404
     return send_file(path, mimetype="image/jpeg")
+@app.route("/viewer", methods=["GET"])
+def viewer():
+    return """
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Live Viewer</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        body { font-family: sans-serif; text-align: center; margin: 20px; }
+        img { max-width: 100%; background: black; }
+      </style>
+    </head>
+    <body>
+      <h2>Live Feed</h2>
+      <img id="feed" src="/latest" alt="live feed">
+      <script>
+        const img = document.getElementById("feed");
 
+        function refresh() {
+          img.src = "/latest?t=" + Date.now();
+        }
+
+        setInterval(refresh, 300);
+      </script>
+    </body>
+    </html>
+    """
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
