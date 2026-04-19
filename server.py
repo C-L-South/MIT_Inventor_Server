@@ -6,7 +6,12 @@ import tensorflow as tf
 import tensorflow_hub as hub
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+
+CORS(
+    app,
+    resources={r"/*": {"origins": "*"}},
+    supports_credentials=False
+)
 
 os.makedirs("frames", exist_ok=True)
 
