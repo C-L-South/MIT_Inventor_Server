@@ -42,18 +42,13 @@ def upload_frame():
     with open(LATEST_ID, "w") as f:
         f.write(frame_id)
 
-    # temporary fake points for testing
-    pose = [
-        {"name": "nose", "x": 0.5, "y": 0.2, "score": 0.99},
-        {"name": "left_shoulder", "x": 0.4, "y": 0.4, "score": 0.99},
-        {"name": "right_shoulder", "x": 0.6, "y": 0.4, "score": 0.99},
-    ]
-
+    keypoints = run_movenet(image_bytes)
+    
     return jsonify({
         "ok": True,
         "received_frame_id": frame_id,
-        "pose": pose
-    }), 200
+        "pose": keypoints
+    })
 
 @app.route("/frame-count", methods=["GET"])
 def frame_count():
