@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import os
 
@@ -26,87 +26,68 @@ def upload_frame():
     with open(LATEST_ID, "w") as f:
         f.write(frame_id)
 
-    print("Received frame:", frame_id)
+    return jsonify({"ok": True})
 
-    return jsonify({"ok": True, "received_frame_id": frame_id})
+@app.route("/latest", methods=["GET"])
+def latest():
+    if not os.path.exists(LATEST_IMAGE):
+        return "no image yet", 404
+    return send_file(LATEST_IMAGE, mimetype="image/jpeg")
 
-@app.route("/viewer", methods=["GET"])
+@app.route("/viewer")
 def viewer():
     return """
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Viewer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      margin: 40px;
-    }
-    #count {
-      font-size: 56px;
-      font-weight: bold;
-      margin-top: 20px;
-    }
-    #status {
-      margin-top: 16px;
-      color: #555;
-    }
-    img {
-      margin-top: 20px;
-      max-width: 100%;
-      background: black;
-    }
-  </style>
-</head>
-<body>
-  <h2>Latest Received Frame</h2>
-  <div id="count">--</div>
-  <div id="status">Waiting...</div>
-  <img id="img" src="" alt="latest frame">
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Live Viewer</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        body { font-family: sans-serif; text-align: center; margin: 20px; }
+        img { max-width: 100%; background: black; }
+        #frame { font-size: 24px; margin: 10px; }
+      </style>
+    </head>
+    <body>
+      <h2>Live Feed</h2>
+      <div id="frame">Frame: --</div>
+      <img id="img">
 
-  <script>
-    const count = document.getElementById("count");
-    const status = document.getElementById("status");
-    const img = document.getElementById("img");
+      <script>
+        const img = document.getElementById("img");
+        const frameDiv = document.getElementById("frame");
 
-    async function refresh() {
-      try {
-        const res = await fetch("/frame-count?t=" + Date.now(), {
-          cache: "no-store"
-        });
-        const data = await res.json();
+        async function refresh() {
+          try {
+            // get frame id
+            const res = await fetch("/latest_frame_id.txt?t=" + Date.now());
+            const frameId = await res.text();
 
-        if (data.ok) {
-          count.textContent = data.frame_id;
-          status.textContent = "Updated: " + new Date().toLocaleTimeString();
-          img.src = "/latest?t=" + Date.now();
-        } else {
-          status.textContent = "No frame yet";
+            // update UI
+            frameDiv.textContent = "Frame: " + frameId;
+
+            // update image
+            img.src = "/latest?t=" + Date.now();
+
+          } catch (err) {
+            frameDiv.textContent = "Waiting...";
+          }
         }
-      } catch (err) {
-        status.textContent = "Error: " + err.message;
-      }
-    }
 
-    refresh();
-    setInterval(refresh, 300);
-  </script>
-</body>
-</html>
+        setInterval(refresh, 300);
+        refresh();
+      </script>
+    </body>
+    </html>
     """
 
-@app.route("/frame-count", methods=["GET"])
-def frame_count():
+@app.route("/latest_frame_id.txt")
+def get_frame_id():
     if not os.path.exists(LATEST_ID):
-        return jsonify({"ok": False, "error": "no frame yet"}), 404
-
+        return "0"
     with open(LATEST_ID, "r") as f:
-        frame_id = f.read().strip()
-
-    return jsonify({"ok": True, "frame_id": frame_id})
+        return f.read()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
