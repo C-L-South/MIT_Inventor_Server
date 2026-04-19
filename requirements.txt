@@ -1,3 +1,8 @@
 Flask
 flask-cors
 gunicorn
+tensorflow
+tensorflow-hub
+numpy
+opencv-python
+Pillow
